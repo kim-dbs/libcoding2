@@ -36,3 +36,17 @@ class MatchRequest(Base):
     # 관계 설정
     mentor = relationship("User", foreign_keys=[mentor_id], back_populates="received_requests")
     mentee = relationship("User", foreign_keys=[mentee_id], back_populates="sent_requests")
+
+class Message(Base):
+    __tablename__ = "messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    is_read = Column(Integer, default=0)  # 0: 읽지 않음, 1: 읽음
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 관계 설정
+    sender = relationship("User", foreign_keys=[sender_id])
+    receiver = relationship("User", foreign_keys=[receiver_id])

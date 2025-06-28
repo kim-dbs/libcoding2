@@ -7,6 +7,7 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Mentors from './pages/Mentors';
 import Requests from './pages/Requests';
+import Messages from './pages/Messages';
 import './App.css';
 
 function App() {
@@ -37,6 +38,7 @@ function AppContent() {
         <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
         <Route path="/mentors" element={user?.role === 'mentee' ? <Mentors /> : <Navigate to="/profile" />} />
         <Route path="/requests" element={user ? <Requests /> : <Navigate to="/login" />} />
+        <Route path="/messages" element={user ? <Messages /> : <Navigate to="/login" />} />
         <Route path="/" element={user ? <Navigate to="/profile" /> : <Navigate to="/login" />} />
       </Routes>
     </>

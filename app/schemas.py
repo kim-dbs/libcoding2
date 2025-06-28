@@ -53,3 +53,28 @@ class MatchRequestResponse(BaseModel):
     menteeId: int
     message: str
     status: str
+
+# 메시지 생성 스키마
+class MessageCreate(BaseModel):
+    receiver_id: int
+    content: str
+
+# 메시지 응답 스키마
+class MessageResponse(BaseModel):
+    id: int
+    sender_id: int
+    receiver_id: int
+    content: str
+    is_read: bool
+    created_at: str
+    sender_name: Optional[str] = None
+    receiver_name: Optional[str] = None
+
+# 대화 목록 스키마
+class ConversationResponse(BaseModel):
+    user_id: int
+    user_name: str
+    user_role: str
+    last_message: Optional[str] = None
+    last_message_time: Optional[str] = None
+    unread_count: int

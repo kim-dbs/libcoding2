@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, MatchRequest, LoginRequest, SignupRequest, ProfileUpdateRequest } from '../types';
+import { User, MatchRequest, LoginRequest, SignupRequest, ProfileUpdateRequest, Message, MessageCreate, Conversation } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -89,6 +89,29 @@ export const matchRequestAPI = {
 
   cancelRequest: async (requestId: number): Promise<MatchRequest> => {
     const response = await api.delete(`/match-requests/${requestId}`);
+    return response.data;
+  },
+};
+
+// 메시지 API
+export const messageAPI = {
+  sendMessage: async (messageData: MessageCreate): Promise<Message> => {
+    const response = await api.post('/messages', messageData);
+    return response.data;
+  },
+
+  getMessagesWithUser: async (userId: number): Promise<Message[]> => {
+    const response = await api.get(`/messages/${userId}`);
+    return response.data;
+  },
+
+  getConversations: async (): Promise<Conversation[]> => {
+    const response = await api.get('/conversations');
+    return response.data;
+  },
+
+  getUnreadCount: async (): Promise<{ unread_count: number }> => {
+    const response = await api.get('/messages/unread-count');
     return response.data;
   },
 };

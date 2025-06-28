@@ -174,3 +174,84 @@ def delete_match_request(db: Session, request_id: int, mentee_id: int) -> Option
     db.commit()
     db.refresh(match_request)
     return match_request
+
+# 메시지 관련 CRUD 함수들
+
+def create_message(db: Session, sender_id: int, receiver_id: int, content: str):
+    """새 메시지 생성"""
+    from models import Message
+    message = Message(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        content=content
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return message
+
+def get_messages_between_users(db: Session, user1_id: int, user2_id: int, limit: int = 50):
+    """두 사용자 간의 메시지 조회"""
+    from models import Message
+    return db.query(Message).filter(
+        or_(
+            and_(Message.sender_id == user1_id, Message.receiver_id == user2_id),
+            and_(Message.sender_id == user2_id, Message.receiver_id == user1_id)
+        )
+    ).order_by(Message.created_at.desc()).limit(limit).all()
+
+def get_conversations(db: Session, user_id: int):
+    """사용자의 대화 목록 조회"""
+    from models import Message
+    from sqlalchemy import func, case
+    
+    # 최근 메시지와 함께 대화 상대 목록 조회
+    subquery = db.query(
+        case(
+            (Message.sender_id == user_id, Message.receiver_id),
+            else_=Message.sender_id
+        ).label('other_user_id'),
+        func.max(Message.created_at).label('last_message_time')
+    ).filter(
+        or_(Message.sender_id == user_id, Message.receiver_id == user_id)
+    ).group_by('other_user_id').subquery()
+    
+    # 각 대화의 최신 메시지 조회
+    conversations = db.query(
+        subquery.c.other_user_id,
+        subquery.c.last_message_time,
+        Message.content.label('last_message'),
+        func.count(
+            case((and_(Message.receiver_id == user_id, Message.is_read == 0), 1))
+        ).label('unread_count')
+    ).join(
+        Message,
+        and_(
+            Message.created_at == subquery.c.last_message_time,
+            or_(
+                and_(Message.sender_id == user_id, Message.receiver_id == subquery.c.other_user_id),
+                and_(Message.sender_id == subquery.c.other_user_id, Message.receiver_id == user_id)
+            )
+        )
+    ).group_by(subquery.c.other_user_id, subquery.c.last_message_time, Message.content).all()
+    
+    return conversations
+
+def mark_messages_as_read(db: Session, sender_id: int, receiver_id: int):
+    """메시지를 읽음 처리"""
+    from models import Message
+    db.query(Message).filter(
+        and_(
+            Message.sender_id == sender_id,
+            Message.receiver_id == receiver_id,
+            Message.is_read == 0
+        )
+    ).update({"is_read": 1})
+    db.commit()
+
+def get_unread_message_count(db: Session, user_id: int) -> int:
+    """읽지 않은 메시지 수 조회"""
+    from models import Message
+    return db.query(Message).filter(
+        and_(Message.receiver_id == user_id, Message.is_read == 0)
+    ).count()

@@ -10,14 +10,17 @@ from database import get_db, init_db
 from models import User, MatchRequest
 from schemas import (
     UserSignup, UserLogin, UserProfile, UserResponse, 
-    MatchRequestCreate, MatchRequestResponse, TokenResponse
+    MatchRequestCreate, MatchRequestResponse, TokenResponse,
+    MessageCreate, MessageResponse, ConversationResponse
 )
 from auth import create_access_token, verify_token, get_password_hash, verify_password
 from crud import (
     create_user, get_user_by_email, get_user_by_id,
     update_user_profile, get_mentors,
     create_match_request, get_incoming_requests, get_outgoing_requests,
-    update_request_status, delete_match_request
+    update_request_status, delete_match_request,
+    create_message, get_messages_between_users, get_conversations,
+    mark_messages_as_read, get_unread_message_count
 )
 
 app = FastAPI(
@@ -349,6 +352,112 @@ async def cancel_request(
         message=cancelled_request.message,
         status=cancelled_request.status
     )
+
+# 5. 메시지 엔드포인트
+@app.post("/api/messages", response_model=MessageResponse)
+async def send_message(
+    message_data: MessageCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 수신자 존재 확인
+    receiver = get_user_by_id(db, message_data.receiver_id)
+    if not receiver:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Receiver not found"
+        )
+    
+    # 자기 자신에게 메시지 보내기 방지
+    if current_user.id == message_data.receiver_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot send message to yourself"
+        )
+    
+    message = create_message(
+        db, current_user.id, message_data.receiver_id, message_data.content
+    )
+    
+    return MessageResponse(
+        id=message.id,
+        sender_id=message.sender_id,
+        receiver_id=message.receiver_id,
+        content=message.content,
+        is_read=bool(message.is_read),
+        created_at=message.created_at.isoformat(),
+        sender_name=current_user.name,
+        receiver_name=receiver.name
+    )
+
+@app.get("/api/messages/{user_id}", response_model=List[MessageResponse])
+async def get_messages_with_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 대화 상대 존재 확인
+    other_user = get_user_by_id(db, user_id)
+    if not other_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User not found"
+        )
+    
+    # 메시지 조회
+    messages = get_messages_between_users(db, current_user.id, user_id)
+    
+    # 읽음 처리 (상대방이 보낸 메시지들)
+    mark_messages_as_read(db, user_id, current_user.id)
+    
+    # 응답 생성
+    result = []
+    for message in reversed(messages):  # 시간 순으로 정렬
+        sender = get_user_by_id(db, message.sender_id)
+        receiver = get_user_by_id(db, message.receiver_id)
+        
+        result.append(MessageResponse(
+            id=message.id,
+            sender_id=message.sender_id,
+            receiver_id=message.receiver_id,
+            content=message.content,
+            is_read=bool(message.is_read),
+            created_at=message.created_at.isoformat(),
+            sender_name=sender.name if sender else "Unknown",
+            receiver_name=receiver.name if receiver else "Unknown"
+        ))
+    
+    return result
+
+@app.get("/api/conversations", response_model=List[ConversationResponse])
+async def get_user_conversations(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    conversations = get_conversations(db, current_user.id)
+    
+    result = []
+    for conv in conversations:
+        other_user = get_user_by_id(db, conv.other_user_id)
+        if other_user:
+            result.append(ConversationResponse(
+                user_id=other_user.id,
+                user_name=other_user.name,
+                user_role=other_user.role,
+                last_message=conv.last_message,
+                last_message_time=conv.last_message_time.isoformat() if conv.last_message_time else None,
+                unread_count=conv.unread_count
+            ))
+    
+    return result
+
+@app.get("/api/messages/unread-count")
+async def get_unread_count(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    count = get_unread_message_count(db, current_user.id)
+    return {"unread_count": count}
 
 if __name__ == "__main__":
     import uvicorn
