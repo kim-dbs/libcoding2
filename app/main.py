@@ -24,9 +24,9 @@ app = FastAPI(
     title="멘토-멘티 매칭 앱 API",
     description="멘토와 멘티를 매칭하는 웹 애플리케이션의 백엔드 API",
     version="1.0.0",
-    docs_url="/",
+    docs_url="/swagger-ui",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/v3/api-docs"
 )
 
 # CORS 설정
@@ -352,4 +352,4 @@ async def cancel_request(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
