@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>멘토 매칭 시스템 테스트</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .loading { color: #007bff; }
+        .warning { color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 3px; 
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .page-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .page-links a {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .page-links a:hover { background: #545b62; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 멘토 매칭 시스템 종합 테스트</h1>
+        
+        <div class="test-section">
+            <h2>📊 서버 상태 확인</h2>
+            <div id="server-status" class="loading">서버 상태 확인 중...</div>
+            <button onclick="checkServers()">서버 상태 재확인</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔐 로그인 테스트</h2>
+            <div>
+                <button onclick="loginAsMentee()">멘티로 로그인</button>
+                <button onclick="loginAsMentor()">멘토로 로그인</button>
+                <button onclick="logout()">로그아웃</button>
+            </div>
+            <div id="login-status" class="loading">로그인 상태 확인 중...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 API 기능 테스트</h2>
+            <div>
+                <button onclick="testMentorsAPI()">멘토 목록 API</button>
+                <button onclick="testProfileAPI()">프로필 API</button>
+                <button onclick="testRequestsAPI()">요청 관리 API</button>
+            </div>
+            <div id="api-status">API 테스트 결과가 여기에 표시됩니다.</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🖥️ 프론트엔드 페이지 접근</h2>
+            <div class="page-links">
+                <a href="http://localhost:3000" target="_blank">홈 페이지</a>
+                <a href="http://localhost:3000/login" target="_blank">로그인 페이지</a>
+                <a href="http://localhost:3000/signup" target="_blank">회원가입 페이지</a>
+                <a href="http://localhost:3000/profile" target="_blank">프로필 페이지</a>
+                <a href="http://localhost:3000/mentors" target="_blank">멘토 목록 페이지</a>
+                <a href="http://localhost:3000/requests" target="_blank">요청 관리 페이지</a>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 백엔드 API 문서</h2>
+            <div class="page-links">
+                <a href="http://localhost:8080" target="_blank">Swagger UI</a>
+                <a href="http://localhost:8080/openapi.json" target="_blank">OpenAPI JSON</a>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>👥 테스트 계정 정보</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <strong>🎯 멘티 계정:</strong><br>
+                    📧 test_mentee@example.com<br>
+                    🔑 testpass123<br>
+                    📱 역할: mentee
+                </div>
+                <div>
+                    <strong>🎓 멘토 계정:</strong><br>
+                    📧 test_mentor@example.com<br>
+                    🔑 testpass123<br>
+                    📱 역할: mentor
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 테스트 시나리오</h2>
+            <ol>
+                <li><strong>멘티로 로그인</strong> → 멘토 목록 페이지 접근</li>
+                <li><strong>멘토 검색/정렬</strong> → 기술스택으로 필터링</li>
+                <li><strong>매칭 요청 전송</strong> → 메시지와 함께 요청</li>
+                <li><strong>멘토로 로그인</strong> → 받은 요청 확인</li>
+                <li><strong>요청 수락/거절</strong> → 상태 변경 확인</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let currentUser = null;
+        
+        async function checkServers() {
+            const statusDiv = document.getElementById('server-status');
+            statusDiv.innerHTML = '<span class="loading">서버 상태 확인 중...</span>';
+            
+            let results = [];
+            
+            // 백엔드 확인
+            try {
+                const backendResponse = await fetch('http://localhost:8080/', { mode: 'no-cors' });
+                results.push('<span class="success">✅ 백엔드 서버 (8080) 실행 중</span>');
+            } catch (error) {
+                results.push('<span class="error">❌ 백엔드 서버 (8080) 연결 실패</span>');
+            }
+            
+            // 프론트엔드 확인
+            try {
+                const frontendResponse = await fetch('http://localhost:3000/', { mode: 'no-cors' });
+                results.push('<span class="success">✅ 프론트엔드 서버 (3000) 실행 중</span>');
+            } catch (error) {
+                results.push('<span class="error">❌ 프론트엔드 서버 (3000) 연결 실패</span>');
+            }
+            
+            statusDiv.innerHTML = results.join('<br>');
+        }
+        
+        async function loginAsMentee() {
+            await login('test_mentee@example.com', 'testpass123', 'mentee');
+        }
+        
+        async function loginAsMentor() {
+            await login('test_mentor@example.com', 'testpass123', 'mentor');
+        }
+        
+        async function login(email, password, expectedRole) {
+            const statusDiv = document.getElementById('login-status');
+            statusDiv.innerHTML = '<span class="loading">로그인 시도 중...</span>';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.token) {
+                    currentToken = data.token;
+                    
+                    // 토큰으로 사용자 정보 가져오기
+                    const userResponse = await fetch('http://localhost:8080/api/me', {
+                        headers: { 'Authorization': 'Bearer ' + currentToken }
+                    });
+                    
+                    if (userResponse.ok) {
+                        currentUser = await userResponse.json();
+                        statusDiv.innerHTML = 
+                            '<span class="success">✅ ' + expectedRole + ' 로그인 성공</span><br>' +
+                            '<strong>사용자 정보:</strong><br>' +
+                            '이름: ' + currentUser.profile.name + '<br>' +
+                            '역할: ' + currentUser.role + '<br>' +
+                            '이메일: ' + currentUser.email;
+                    } else {
+                        statusDiv.innerHTML = '<span class="warning">⚠️ 로그인은 성공했지만 사용자 정보를 가져올 수 없습니다.</span>';
+                    }
+                } else {
+                    statusDiv.innerHTML = '<span class="error">❌ 로그인 실패: ' + JSON.stringify(data) + '</span>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<span class="error">❌ 로그인 오류: ' + error.message + '</span>';
+            }
+        }
+        
+        function logout() {
+            currentToken = null;
+            currentUser = null;
+            document.getElementById('login-status').innerHTML = '<span class="warning">로그아웃 완료</span>';
+            document.getElementById('api-status').innerHTML = 'API 테스트 결과가 여기에 표시됩니다.';
+        }
+        
+        async function testMentorsAPI() {
+            if (!currentToken) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ 먼저 로그인하세요.</span>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/mentors', {
+                    headers: { 'Authorization': 'Bearer ' + currentToken }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('api-status').innerHTML = 
+                        '<span class="success">✅ 멘토 목록 API 성공</span><br>' +
+                        '<strong>멘토 수:</strong> ' + data.length + '명<br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    document.getElementById('api-status').innerHTML = 
+                        '<span class="error">❌ 멘토 목록 API 실패</span><br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ API 호출 오류: ' + error.message + '</span>';
+            }
+        }
+        
+        async function testProfileAPI() {
+            if (!currentToken) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ 먼저 로그인하세요.</span>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/me', {
+                    headers: { 'Authorization': 'Bearer ' + currentToken }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('api-status').innerHTML = 
+                        '<span class="success">✅ 프로필 API 성공</span><br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    document.getElementById('api-status').innerHTML = 
+                        '<span class="error">❌ 프로필 API 실패</span><br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ API 호출 오류: ' + error.message + '</span>';
+            }
+        }
+        
+        async function testRequestsAPI() {
+            if (!currentToken) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ 먼저 로그인하세요.</span>';
+                return;
+            }
+            
+            if (!currentUser) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ 사용자 정보가 없습니다.</span>';
+                return;
+            }
+            
+            try {
+                let endpoint = currentUser.role === 'mentor' ? 'incoming' : 'outgoing';
+                const response = await fetch('http://localhost:8080/api/match-requests/' + endpoint, {
+                    headers: { 'Authorization': 'Bearer ' + currentToken }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('api-status').innerHTML = 
+                        '<span class="success">✅ ' + (currentUser.role === 'mentor' ? '받은' : '보낸') + ' 요청 API 성공</span><br>' +
+                        '<strong>요청 수:</strong> ' + data.length + '개<br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    document.getElementById('api-status').innerHTML = 
+                        '<span class="error">❌ 요청 목록 API 실패</span><br>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                document.getElementById('api-status').innerHTML = '<span class="error">❌ API 호출 오류: ' + error.message + '</span>';
+            }
+        }
+        
+        // 페이지 로드 시 서버 상태 확인
+        window.onload = () => {
+            checkServers();
+        };
+    </script>
+</body>
+</html>

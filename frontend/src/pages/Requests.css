@@ -1,0 +1,144 @@
+.requests-container {
+  min-height: calc(100vh - 80px);
+  padding: 2rem;
+  background-color: #f5f5f5;
+}
+
+.requests-container h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #2c3e50;
+}
+
+.requests-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.request-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.request-header {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.request-status {
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.request-id {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.request-body {
+  padding: 1.5rem;
+}
+
+.request-message {
+  margin-bottom: 1rem;
+}
+
+.request-message strong {
+  color: #2c3e50;
+}
+
+.request-message p {
+  margin: 0.5rem 0 0;
+  line-height: 1.4;
+  color: #555;
+}
+
+.request-info {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.request-info p {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.request-actions {
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 1rem;
+}
+
+.accept-button {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.accept-button:hover:not(:disabled) {
+  background-color: #219a52;
+}
+
+.reject-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.reject-button:hover:not(:disabled) {
+  background-color: #c0392b;
+}
+
+.cancel-button {
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #7f8c8d;
+}
+
+.request-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.no-requests {
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 2rem auto;
+}
